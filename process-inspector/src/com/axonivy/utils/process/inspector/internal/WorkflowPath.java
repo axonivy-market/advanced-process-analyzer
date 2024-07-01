@@ -14,7 +14,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
-import java.util.stream.Collector;
 import java.util.stream.Collectors;
 
 import org.apache.commons.collections4.ListUtils;
@@ -185,8 +184,8 @@ class WorkflowPath {
 
 			// It is EmbeddedProcessElement
 			if (element instanceof SubProcessGroup) {				
-				List<AnalysisPath> subPaths = ((SubProcessGroup) element).getInternalPaths();
-				//List<AnalysisPath> subPaths = getAnalysisPathBaseOnNextSequenceFlow(internalPaths, nextElement.getElement());
+				List<AnalysisPath> internalPaths = ((SubProcessGroup) element).getInternalPaths();
+				List<AnalysisPath> subPaths = getAnalysisPathBaseOnNextSequenceFlow(internalPaths, nextElement);
 				List<DetectedElement> allTaskFromSubPath = new ArrayList<>();
 				for(AnalysisPath subPath : subPaths) {
 					ProcessElement startSubElement = subPath.getElements().get(0);
@@ -478,9 +477,13 @@ class WorkflowPath {
 		return defaultIfBlank(taskNameFromRawMacro, taskIdentifier);
 	}
 	
-	private List<AnalysisPath> getAnalysisPathBaseOnNextSequenceFlow(List<AnalysisPath> subPaths, BaseElement sequenceFlow) {
+	private List<AnalysisPath> getAnalysisPathBaseOnNextSequenceFlow(List<AnalysisPath> subPaths, ProcessElement nextElement) {		
+		if(nextElement == null) {
+			return subPaths;
+		}
+		
 		List<AnalysisPath> result = new ArrayList<>();
-
+		BaseElement sequenceFlow = nextElement.getElement();
 		if (sequenceFlow instanceof SequenceFlow) {
 			for (AnalysisPath path : subPaths) {				
 				ProcessElement lastProcessElement = AnalysisPathHelper.getLastElement(path);
@@ -494,7 +497,7 @@ class WorkflowPath {
 				if (processGraph.isTaskSwitchGateway(lastElement)) {
 					Map<SequenceFlow, List<AnalysisPath>> validInternalPaths = new LinkedHashMap<>();
 					((TaskParallelGroup) lastProcessElement).getInternalPaths().forEach((key, value) -> {
-						var validPaths = getAnalysisPathBaseOnNextSequenceFlow(value, sequenceFlow);
+						var validPaths = getAnalysisPathBaseOnNextSequenceFlow(value, nextElement);
 						if (isNotEmpty(validPaths)) {
 							validInternalPaths.put(key, validPaths);
 						}
@@ -507,6 +510,7 @@ class WorkflowPath {
 						taskGroup.setInternalPaths(validInternalPaths);
 						newPath.add(taskGroup);	
 					}
+					result.add(new AnalysisPath(newPath));
 					continue;
 				}
 				

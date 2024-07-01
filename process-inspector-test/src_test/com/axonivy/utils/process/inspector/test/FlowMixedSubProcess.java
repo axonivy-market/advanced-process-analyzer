@@ -30,7 +30,7 @@ public class FlowMixedSubProcess extends FlowExampleTest {
 		var start = ProcessGraphHelper.findByElementName(process, "start");
 		var detectedTasks = processInspector.findAllTasks(start, UseCase.BIGPROJECT);
 		
-		var expected = Arrays.array("TaskA", "SubA-TaskA", "SubA-TaskC", "SubA-TaskB", "SubD-TaskB", "SubB-TaskA", "SubD-TaskC", "SubC-TaskA", "SubD-TaskD", "SubD-TaskA");
+		var expected = Arrays.array("TaskA", "SubA-TaskA", "SubA-TaskB", "SubD-TaskB", "SubA-TaskC", "SubB-TaskA", "SubD-TaskC", "SubC-TaskA", "SubD-TaskD", "SubD-TaskA");
 		var taskNames = getTaskNames(detectedTasks);
 		assertArrayEquals(expected, taskNames);
 	}
